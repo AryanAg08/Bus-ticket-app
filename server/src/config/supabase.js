@@ -1,17 +1,27 @@
 const { Sequelize } = require("sequelize")
 require("dotenv").config();
 
-const sqlize = new Sequelize(process.env.SUPABASE_DB_URL, {
-    dialect: 'postgres',
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false,
-        },
-    },
+const sqlize = new Sequelize(
+  process.env.DB_NAME,     // database name
+  process.env.DB_USER,     // username
+  process.env.DB_PASS,     // password
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
+    dialect: "postgres",
     logging: false,
-    family: 4,
-});
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false, 
+      },
+      family: 4, 
+    },
+  }
+);
+
+export default sequelize;
+
 
 
 const testDbConnection = async () => {
