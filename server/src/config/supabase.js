@@ -10,7 +10,7 @@ const sqlize = new Sequelize(process.env.SUPABASE_DB_URL, {
         },
     },
     logging: false,
-
+    family: 4,
 });
 
 
