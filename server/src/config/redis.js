@@ -1,3 +1,5 @@
+require("dns").setDefaultResultOrder("ipv4first");
+
 const Redis = require("ioredis");
 const redis = new Redis(process.env.UPSTASH_REDIS_URL);
 
