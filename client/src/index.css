@@ -31,7 +31,7 @@ body {
   font-size: 1.2rem;
 }
 
-.nav-links a {
+.nav-links a + a{
   color: white;
   margin-left: 12px;
   text-decoration: none;
