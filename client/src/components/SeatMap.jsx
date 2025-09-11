@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 
 export default function SeatMap() {
   const { tripId } = useParams();
-  const { token } = useContext(AuthContext);
+  const token = localStorage.getItem("authToken");
   const [seats, setSeats] = useState([]);
   const [selected, setSelected] = useState([]);
   const navigate = useNavigate();
