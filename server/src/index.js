@@ -68,7 +68,7 @@ app.get("/ping", (req, res) => {
   res.status(200).json("Server running!!");
 });
 
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "../../public", "index.html"));
 });
 
