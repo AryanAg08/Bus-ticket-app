@@ -21,7 +21,7 @@ exports.confirmBooking = async (req, res) => {
       id: Date.now(), 
       trip,
       seats,
-      totalPrice: seats.reduce((sum, seat) => sum + seat.price, 0),
+      totalPrice: seats.reduce((sum, seat) => sum + trip.seatPricing, 0),
     };
 
     const filePath = await generateInvoice(booking, user);

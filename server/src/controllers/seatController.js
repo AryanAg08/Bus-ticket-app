@@ -5,7 +5,7 @@ const { redis } = require("../config/redis");
 const { io } = require("../index");
 const { sqlize } = require("../config/supabase"); 
 
-// Hold seats (accepts multiple seats)
+
 exports.holdSeats = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -17,7 +17,7 @@ exports.holdSeats = async (req, res) => {
 
     const results = [];
     for (const seatNo of seatNos) {
-      // Check if seat is already booked in DB
+      // Check 
       const seat = await Seat.findOne({ where: { tripId, seatNo }});
       if (!seat) {
         results.push({ seatNo, ok: false, reason: "Seat not found" });
@@ -28,12 +28,11 @@ exports.holdSeats = async (req, res) => {
         continue;
       }
 
-      // Try to place hold in Redis (atomic)
+  
       const ok = await placeHold(tripId, seatNo, userId, ttl);
       if (ok) {
         results.push({ seatNo, ok: true });
-        // emit to clients: seatHeld
-        io.emit("seatHeld", { tripId, seatNo, userId, ttl });
+         io.emit("seatHeld", { tripId, seatNo, userId, ttl });
       } else {
         // already held by someone else
         const existing = await getHold(tripId, seatNo);
@@ -51,8 +50,7 @@ exports.holdSeats = async (req, res) => {
 exports.releaseSeats = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { tripId, seatNos, force } = req.body; // force (bool) allow admin to force release
-
+    const { tripId, seatNos, force } = req.body; 
     if (!tripId || !Array.isArray(seatNos) || seatNos.length === 0) {
       return res.status(400).json({ message: "tripId and seatNos are required" });
     }
@@ -66,9 +64,8 @@ exports.releaseSeats = async (req, res) => {
         continue;
       }
       const parsed = JSON.parse(hold);
-      // allow release only by holder or admin (if force)
       const isHolder = parsed.userId === userId;
-      const isAdmin = req.user.role === "admin"; // admin == organiser in your app
+      const isAdmin = req.user.role === "admin";
       if (!isHolder && !isAdmin && !force) {
         results.push({ seatNo, ok: false, reason: "NotHolder" });
         continue;
@@ -87,8 +84,6 @@ exports.releaseSeats = async (req, res) => {
   }
 };
 
-// Purchase seats (final checkout). Ensures atomic booking and clears any holds.
-// body: { tripId, seatNos }
 exports.purchaseSeats = async (req, res) => {
   const userId = req.user.id;
   const { tripId, seatNos } = req.body;
@@ -101,15 +96,12 @@ exports.purchaseSeats = async (req, res) => {
     const bookedSeats = [];
 
     await sqlize.transaction(async (t) => {
-      // double-check each seat is not already sold and either held by this user or not
       for (const seatNo of seatNos) {
-        // Lock the row for update
         const seat = await Seat.findOne({ where: { tripId, seatNo }, transaction: t, lock: t.LOCK.UPDATE });
         if (!seat) throw new Error(`Seat ${seatNo} not found`);
         if (seat.isBooked) throw new Error(`Seat ${seatNo} already sold`);
 
-        // If seat is held, ensure held by this user (or admin)
-        const key = `hold:${tripId}:${seatNo}`;
+       const key = `hold:${tripId}:${seatNo}`;
         let parsed = null;
         const holdVal = await redis.get(key);
         if (holdVal) {
