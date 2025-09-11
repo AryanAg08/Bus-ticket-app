@@ -75,6 +75,7 @@ body {
 
 .btn.small {
   padding: 6px 10px;
+  margin: 6px auto;
   font-size: 0.9em;
 }
 
