@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 
 export default function SeatMap() {
     const [tick, setTick] = useState(0);
+    const [trip, setTrip] = useState(null);
   const { tripId } = useParams();
   const token = localStorage.getItem("authToken");
   const [seats, setSeats] = useState([]);
@@ -33,6 +34,20 @@ export default function SeatMap() {
       toast.error("Failed to load seats");
     }
   }
+
+  async function fetchTrip() {
+  try {
+    const data = await api.getTrip(tripId, token); // Make sure you have this API endpoint
+    setTrip(data);
+  } catch (err) {
+    toast.error("Failed to load trip details");
+  }
+}
+
+useEffect(() => {
+  fetchTrip();
+}, [tripId]);
+
 
   // initial fetch + socket listeners
   useEffect(() => {
@@ -163,7 +178,12 @@ export default function SeatMap() {
 
   return (
     <div className="seatmap-container">
-      <h2>Trip {tripId} - Seat Map</h2>
+    <h2>
+  {trip
+    ? `Trip: ${trip.from} → ${trip.to} | Date: ${new Date(trip.date).toLocaleDateString()} | Time: ${trip.time}`
+    : `Trip ${tripId} - Seat Map`}
+</h2>
+
 
       <div className="legend">
         <span className="seat available">Available</span>

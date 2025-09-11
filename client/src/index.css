@@ -129,9 +129,6 @@ body {
   gap: 8px;
 }
 
-/* Seat Map */
-/* 
-/* Responsive */
 @media (max-width: 600px) {
   .seat-grid {
     grid-template-columns: repeat(4, 50px);

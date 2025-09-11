@@ -36,6 +36,7 @@ export const api = {
 
 
     getTrips: () => request("/trips", "GET"), // you need a GET /trips backend route; implement if missing
+    getTrip: (tripId) => request(`/trips/${tripId}`, "GET"),
     getSeats: (tripId, token) => request(`/trips/${tripId}/seats`, "GET", null, token),
     holdSeats: (payload, token) => request("/user/hold", "POST", payload, token),
     releaseSeats: (payload, token) => request("/user/release", "POST", payload, token),

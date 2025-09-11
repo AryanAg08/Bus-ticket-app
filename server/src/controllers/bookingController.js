@@ -15,13 +15,15 @@ exports.confirmBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid trip or seats" });
     }
 
-    await Promise.all(seats.map(seat => seat.update({ isBooked: true })));
 
+    
+    await Promise.all(seats.map(seat => seat.update({ isBooked: true })));
+     const totalPrice = seats.length * trip.seatPricing;
     const booking = {
       id: Date.now(), 
       trip,
       seats,
-      totalPrice: seats.reduce((sum, seat) => sum + trip.seatPricing, 0),
+      totalPrice,
     };
 
     const filePath = await generateInvoice(booking, user);
