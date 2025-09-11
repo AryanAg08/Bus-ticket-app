@@ -1,36 +1,62 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
+import { toast } from "react-toastify";
 
 export default function TripList() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getTrips().then((data) => {
-      setTrips(data || []);
-      setLoading(false);
-    }).catch((err) => {
-      console.error(err);
-      setLoading(false);
-      alert("Failed to load trips. Make sure GET /trips exists on backend.");
-    });
+    api
+      .getTrips()
+      .then((data) => {
+        setTrips(data || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+        toast.error("❌ Failed to load trips. Make sure GET /trips exists on backend.");
+      });
   }, []);
 
-  if (loading) return <div className="card">Loading trips...</div>;
-  if (!trips.length) return <div className="card">No trips available</div>;
+  if (loading) {
+    return <div className="status-message">Loading trips...</div>;
+  }
+
+  if (!trips.length) {
+    return <div className="status-message">No trips available</div>;
+  }
 
   return (
-    <div>
-      <h2>Available Trips</h2>
+    <div className="trip-list-container">
+      <h2 className="title">🚌 Available Trips</h2>
       <div className="trip-list">
         {trips.map((t) => (
           <div className="card trip-card" key={t.id}>
-            <div><b>{t.from}</b> ➜ <b>{t.to}</b></div>
-            <div>Departure: {new Date(t.departureTime).toLocaleString()}</div>
-            <div>Arrival: {new Date(t.arrivalTime).toLocaleString()}</div>
-            <div>Bus: {t.busType}</div>
-            <Link to={`/trip/${t.id}`} className="btn small">Select Seats</Link>
+            <div className="trip-route">
+              <span className="from">{t.from}</span> ➜{" "}
+              <span className="to">{t.to}</span>
+            </div>
+            <div className="trip-time">
+              <p>
+                <strong>Departure:</strong>{" "}
+                {new Date(t.departureTime).toLocaleString()}
+              </p>
+              <p>
+                <strong>Arrival:</strong>{" "}
+                {new Date(t.arrivalTime).toLocaleString()}
+              </p>
+            </div>
+            <div className="trip-bus">
+              <p>
+                <strong>Bus Type:</strong> {t.busType}
+              </p>
+            </div>
+            <Link to={`/trip/${t.id}`} className="btn">
+              🎟️ Select Seats
+            </Link>
           </div>
         ))}
       </div>
