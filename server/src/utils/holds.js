@@ -1,15 +1,38 @@
 const { redis } = require("../config/redis");
 
-const HOLD_PREFIX = "hold";
-const userHoldsKey = (userId) => `userholds:${userId}`;
-
 function holdKey(tripId, seatNo) {
- return `${HOLD_PREFIX}:${tripId}:${seatNo}`;
+  return `hold:${tripId}:${seatNo}`;
 }
 
-async function isSeatHeld(tripId, seatNo) {
+async function placeHold(tripId, seatNo, userId, ttl = 300) {
   const key = holdKey(tripId, seatNo);
-  return await redis.exists(key); 
+  const expiresAt = Date.now() + ttl * 1000;
+  const holdData = { userId, tripId, seatNo, expiresAt };
+
+  let ok;
+  try {
+    ok = await redis.set(key, JSON.stringify(holdData), { NX: true, EX: ttl });
+  } catch (err) {
+    // fallback for clients that expect separate args (ioredis, older clients)
+    try {
+      ok = await redis.set(key, JSON.stringify(holdData), "NX", "EX", ttl);
+    } catch (e) {
+      ok = null;
+    }
+  }
+
+  // redis returns 'OK' when set, null otherwise
+  if (ok) {
+    try {
+      await redis.sadd(`userholds:${userId}`, key);
+    } catch (e) {
+      // ignore set-add errors
+    }
+    console.log(`placeHold: held ${key} for user ${userId} until ${new Date(expiresAt).toISOString()}`);
+    return holdData;
+  }
+
+  return null;
 }
 
 async function getHold(tripId, seatNo) {
@@ -18,27 +41,27 @@ async function getHold(tripId, seatNo) {
   return val ? JSON.parse(val) : null;
 }
 
-// returns true = succeeded, false = already held
-async function placeHold(tripId, seatNo, userId, ttlSeconds = 300) {
+async function releaseHold(tripId, seatNo) {
   const key = holdKey(tripId, seatNo);
-  const payload = JSON.stringify({ userId, heldAt: Date.now() });
-  const res = await redis.set(key, payload, "NX", "EX", ttlSeconds);
-  if (res === "OK") {
-    await redis.sadd(userHoldsKey(userId), key);
+  const val = await redis.get(key);
+  if (val) {
+    const parsed = JSON.parse(val);
+    await redis.del(key);
+    await redis.srem(`userholds:${parsed.userId}`, key).catch(() => {});
     return true;
   }
   return false;
 }
 
-async function releaseHold(tripId, seatNo, userId) {
-  const key = holdKey(tripId, seatNo);
+async function isSeatHeld(tripId, seatNo) {
   const hold = await getHold(tripId, seatNo);
-  if (!hold) return false;
-  if (hold.userId !== userId) {
-   }
-  await redis.del(key);
-  await redis.srem(userHoldsKey(userId), key).catch(()=>{});
-  return true;
+  return !!hold;
 }
 
-module.exports = { holdKey, isSeatHeld, getHold, placeHold, releaseHold, userHoldsKey };
+module.exports = {
+  holdKey,
+  placeHold,
+  getHold,
+  releaseHold,
+  isSeatHeld,
+};

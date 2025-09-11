@@ -1,50 +1,62 @@
-import React, { useEffect, useState } from "react";
+// src/components/SeatMap.jsx
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { socket } from "../socket";
+import "./seatmap.css";
 import { toast } from "react-toastify";
 
 export default function SeatMap() {
+    const [tick, setTick] = useState(0);
   const { tripId } = useParams();
   const token = localStorage.getItem("authToken");
   const [seats, setSeats] = useState([]);
   const [selected, setSelected] = useState([]);
-  const [timers, setTimers] = useState({});
   const navigate = useNavigate();
+  const userIdFromToken = (token) => {
+    try {
+      const payload = token.split(".")[1];
+      return JSON.parse(atob(payload)).id;
+    } catch (e) {
+      return null;
+    }
+  };
+  const myId = userIdFromToken(token);
+// const myId = token ? String(parseJwt(token).id) : null;
+
+  // fetch seats and set state
+  async function fetchSeats() {
+    try {
+      const data = await api.getSeats(tripId, token);
+      setSeats(Array.isArray(data) ? data : []);
+    } catch (err) {
+      toast.error("Failed to load seats");
+    }
+  }
+
+  // initial fetch + socket listeners
+  useEffect(() => {
+  const id = setInterval(() => setTick(t => t + 1), 1000);
+  return () => clearInterval(id);
+}, []);
 
   useEffect(() => {
     fetchSeats();
 
     socket.on("seatHeld", (data) => {
-      if (data.tripId.toString() === tripId.toString()) {
-        fetchSeats();
-        if (data.ttl) {
-          const expiry = Date.now() + data.ttl * 1000;
-          setTimers((prev) => ({ ...prev, [data.seatNo]: expiry }));
-        }
-      }
+      if (!data || data.tripId?.toString() !== tripId?.toString()) return;
+      // data.hold or data.expiresAt
+      fetchSeats();
     });
 
     socket.on("seatReleased", (data) => {
-      if (data.tripId.toString() === tripId.toString()) {
-        fetchSeats();
-        setTimers((prev) => {
-          const copy = { ...prev };
-          delete copy[data.seatNo];
-          return copy;
-        });
-      }
+      if (!data || data.tripId?.toString() !== tripId?.toString()) return;
+      fetchSeats();
     });
 
     socket.on("seatSold", (data) => {
-      if (data.tripId.toString() === tripId.toString()) {
-        fetchSeats();
-        setTimers((prev) => {
-          const copy = { ...prev };
-          delete copy[data.seatNo];
-          return copy;
-        });
-      }
+      if (!data || data.tripId?.toString() !== tripId?.toString()) return;
+      fetchSeats();
     });
 
     return () => {
@@ -54,23 +66,33 @@ export default function SeatMap() {
     };
   }, [tripId]);
 
-  function fetchSeats() {
-    api.getSeats(tripId, token).then(setSeats).catch(() => {
-      toast.error("Failed to load seats");
-    });
-  }
+  // tick to re-render every second for countdowns
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSeats((prev) => [...prev]); // shallow copy to trigger re-render
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   function toggleSeat(seatNo) {
-    setSelected((s) =>
-      s.includes(seatNo) ? s.filter((x) => x !== seatNo) : [...s, seatNo]
-    );
+    setSelected((s) => (s.includes(seatNo) ? s.filter((x) => x !== seatNo) : [...s, seatNo]));
   }
 
   async function holdSelected() {
     if (!selected.length) return toast.info("Select seats to hold");
     try {
-      await api.holdSeats({ tripId, seatNos: selected }, token);
-      toast.success("Seats held");
+      const res = await api.holdSeats({ tripId, seatNos: selected }, token);
+      // res.results expected
+      if (res?.results) {
+        const failed = res.results.filter((r) => !r.ok);
+        if (failed.length) {
+          failed.forEach((f) => toast.error(`Seat ${f.seatNo}: ${f.reason || "Hold failed"}`));
+        } else {
+          toast.success("Seats held");
+        }
+      } else {
+        toast.success("Seats held");
+      }
       setSelected([]);
       fetchSeats();
     } catch (err) {
@@ -96,34 +118,53 @@ export default function SeatMap() {
       await api.purchaseSeats({ tripId, seatNos: selected }, token);
       await api.confirmBooking({ tripId, seatNos: selected }, token);
       toast.success("Purchase successful");
-
-      setTimers((prev) => {
-        const copy = { ...prev };
-        selected.forEach((s) => delete copy[s]);
-        return copy;
-      });
-
+      // clear selected timers by refetch
+      setSelected([]);
+      fetchSeats();
       navigate("/booking", { state: { tripId, seatNos: selected } });
     } catch (err) {
       toast.error(err.message || "Purchase failed");
     }
   }
 
-  function getCountdown(seatNo) {
-    const expiry = timers[seatNo];
-    if (!expiry) return null;
-    const diff = Math.max(0, Math.floor((expiry - Date.now()) / 1000));
-    return diff > 0 ? `${diff}s` : null;
+  function getCountdownFromHold(hold) {
+    if (!hold?.expiresAt) return null;
+    const diff = Math.max(0, Math.floor((hold.expiresAt - Date.now()) / 1000));
+    return diff > 0 ? `${diff}s` : "Expired";
   }
 
-  // Arrange seats in proper order
-  const sortedSeats = [...seats].sort((a, b) => a.seatNo - b.seatNo);
+  // derive columns (seats per row) from seatNo pattern "r-c"
+  const cols = useMemo(() => {
+    if (!seats.length) return 6;
+    let maxCol = 0;
+    seats.forEach((s) => {
+      const parts = (s.seatNo || "").split("-");
+      const col = parseInt(parts[1], 10);
+      if (!isNaN(col) && col > maxCol) maxCol = col;
+    });
+    return maxCol || 6;
+  }, [seats]);
+
+  // sort seats by row then column (if seatNo format row-col)
+  const sortedSeats = useMemo(() => {
+    return [...seats].sort((a, b) => {
+      const pa = (a.seatNo || "").split("-").map((x) => parseInt(x, 10));
+      const pb = (b.seatNo || "").split("-").map((x) => parseInt(x, 10));
+      const ra = pa[0] || 0;
+      const ca = pa[1] || 0;
+      const rb = pb[0] || 0;
+      const cb = pb[1] || 0;
+      if (ra === rb) return ca - cb;
+      return ra - rb;
+    });
+  }, [seats]);
+
+   
 
   return (
     <div className="seatmap-container">
       <h2>Trip {tripId} - Seat Map</h2>
 
-      {/* Legend */}
       <div className="legend">
         <span className="seat available">Available</span>
         <span className="seat selected">Selected</span>
@@ -132,41 +173,48 @@ export default function SeatMap() {
         <span className="seat booked">Booked</span>
       </div>
 
-      {/* Seat Grid */}
-      <div className="seat-grid">
-        {sortedSeats.map((s) => {
-          const userId = token ? parseJwt(token).id : null;
-          const heldByOther =
-            s.hold && s.hold.userId && s.hold.userId !== userId;
+      <div
+        className="seat-grid"
+        style={{ gridTemplateColumns: `repeat(${cols}, 60px)` }}
+      >
+      
 
-          let seatClass = "seat";
-          if (s.isBooked) seatClass += " booked"; // red
-          else if (s.hold && heldByOther) seatClass += " held-other"; // gray
-          else if (s.hold && !heldByOther) seatClass += " held-self"; // yellow
-          else seatClass += " available"; // green
+{sortedSeats.map((s) => {
+  const isHeld = !!s.hold;
+  const holdUserId = isHeld ? String(s.hold.userId) : null;
 
-          if (selected.includes(s.seatNo)) seatClass += " selected";
+  const heldByMe = isHeld && holdUserId === myId;
+  const heldByOther = isHeld && holdUserId !== myId;
 
-          return (
-            <div
-              key={s.seatNo}
-              className={seatClass}
-              onClick={() => {
-                if (s.isBooked) return;
-                if (s.hold && heldByOther) return toast.info("Held by other");
-                toggleSeat(s.seatNo);
-              }}
-            >
-              {s.seatNo}
-              {seatClass.includes("held-self") && (
-                <div className="timer">{getCountdown(s.seatNo)}</div>
-              )}
-            </div>
-          );
-        })}
+  let seatClass = "seat";
+  if (s.isBooked) seatClass += " booked";
+  else if (heldByMe) seatClass += " held-self";
+  else if (heldByOther) seatClass += " held-other";
+  else seatClass += " available";
+
+  if (selected.includes(s.seatNo)) seatClass += " selected";
+
+  const countdown = isHeld ? Math.max(0, Math.floor((s.hold.expiresAt - Date.now()) / 1000)) : null;
+
+  return (
+    <div
+      key={s.seatNo}
+      className={seatClass}
+      onClick={() => {
+        if (s.isBooked) return;
+        if (heldByOther) return toast.info("Held by other");
+        toggleSeat(s.seatNo);
+      }}
+    >
+      {s.seatNo}
+      {countdown && <div className="timer">{countdown > 0 ? `${countdown}s` : "Expired"}</div>}
+    </div>
+  );
+})}
+
+
       </div>
 
-      {/* Actions */}
       <div className="seat-actions">
         <button className="btn" onClick={holdSelected}>
           Hold
@@ -180,13 +228,4 @@ export default function SeatMap() {
       </div>
     </div>
   );
-}
-
-function parseJwt(token) {
-  try {
-    const payload = token.split(".")[1];
-    return JSON.parse(atob(payload));
-  } catch (e) {
-    return {};
-  }
 }
