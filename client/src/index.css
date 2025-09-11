@@ -5,9 +5,10 @@ body {
   color: #222;
 }
 
+/* Loading Spinner */
 .spinner {
-  border: 4px solid #f3f3f3; /* Light grey */
-  border-top: 4px solid #0b5ed7; /* Blue */
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0b5ed7;
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -27,13 +28,14 @@ body {
   color: #555;
 }
 
-
+/* Layout */
 .container {
   padding: 20px;
   max-width: 1100px;
   margin: 0 auto;
 }
 
+/* Navbar */
 .nav {
   background: #d7670b;
   color: white;
@@ -54,7 +56,7 @@ body {
   font-size: 1.2rem;
 }
 
-.nav-links a + a{
+.nav-links a + a {
   color: white;
   margin-left: 12px;
   text-decoration: none;
@@ -68,6 +70,7 @@ body {
   border-radius: 4px;
 }
 
+/* Cards */
 .card {
   background: white;
   padding: 16px;
@@ -86,6 +89,7 @@ body {
   border-radius: 4px;
 }
 
+/* Buttons */
 .btn {
   background: #0b5ed7;
   color: white;
@@ -94,6 +98,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   margin-right: 8px;
+  transition: background 0.2s ease-in-out;
 }
 
 .btn.small {
@@ -107,6 +112,11 @@ body {
   cursor: not-allowed;
 }
 
+.btn:hover:not(:disabled) {
+  background: #0946a1;
+}
+
+/* Trip List */
 .trip-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -119,46 +129,13 @@ body {
   gap: 8px;
 }
 
-.seat-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 54px);
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.seat {
-  width: 54px;
-  height: 54px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #eee;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.seat.booked {
-  background: #d9534f;
-  color: white;
-  cursor: not-allowed;
-}
-
-.seat.held {
-  background: #f0ad4e;
-  color: white;
-  cursor: not-allowed;
-}
-
-.seat.selected {
-  background: #198754;
-  color: white;
-}
-
+/* Seat Map */
 .seat-grid {
   display: grid;
   grid-template-columns: repeat(6, 50px);
   gap: 10px;
   margin: 20px 0;
+  justify-content: center;
 }
 
 .seat {
@@ -171,17 +148,11 @@ body {
   font-weight: bold;
   cursor: pointer;
   position: relative;
+  transition: transform 0.15s ease-in-out;
 }
 
-.seat.held-other {
-  background: #95a5a6; /* gray */
-  color: white;
-  cursor: not-allowed;
-}
-
-.seat.held-self {
-  background: #f1c40f; /* yellow */
-  color: black;
+.seat:hover {
+  transform: scale(1.08);
 }
 
 .seat.available {
@@ -190,9 +161,27 @@ body {
 }
 
 .seat.selected {
-  border: 3px solid #3498db;
+  border: 3px solid #3498db; /* blue border */
 }
 
+.seat.held-self {
+  background: #f1c40f; /* yellow */
+  color: black;
+}
+
+.seat.held-other {
+  background: #95a5a6; /* gray */
+  color: white;
+  cursor: not-allowed;
+}
+
+.seat.booked {
+  background: #d9534f; /* red */
+  color: white;
+  cursor: not-allowed;
+}
+
+/* Seat Timer */
 .timer {
   font-size: 0.7em;
   position: absolute;
@@ -200,9 +189,27 @@ body {
   color: #333;
 }
 
+/* Legend */
+.legend {
+  margin: 15px 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 
+.legend .seat {
+  width: auto;
+  height: auto;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: default;
+}
+
+/* Responsive */
 @media (max-width: 600px) {
   .seat-grid {
-    grid-template-columns: repeat(4, 54px);
+    grid-template-columns: repeat(4, 50px);
   }
 }
