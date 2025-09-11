@@ -92,6 +92,7 @@ exports.releaseSeats = async (req, res) => {
 exports.purchaseSeats = async (req, res) => {
   const userId = req.user.id;
   const { tripId, seatNos } = req.body;
+  console.log(req.body);
   if (!tripId || !Array.isArray(seatNos) || seatNos.length === 0) {
     return res.status(400).json({ message: "tripId and seatNos are required" });
   }
@@ -109,9 +110,10 @@ exports.purchaseSeats = async (req, res) => {
 
         // If seat is held, ensure held by this user (or admin)
         const key = `hold:${tripId}:${seatNo}`;
+        let parsed = null;
         const holdVal = await redis.get(key);
         if (holdVal) {
-          const parsed = JSON.parse(holdVal);
+           parsed = JSON.parse(holdVal);
           if (parsed.userId !== userId && req.user.role !== "admin") {
             throw new Error(`Seat ${seatNo} held by another user`);
           }

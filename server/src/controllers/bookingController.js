@@ -17,11 +17,11 @@ exports.confirmBooking = async (req, res) => {
     }
 
     // Ensure all seats are available
-    for (const seat of seats) {
-      if (seat.isBooked) {
-        return res.status(400).json({ message: `Seat ${seat.seatNo} already booked` });
-      }
-    }
+    // for (const seat of seats) {
+    //   if (seat.isBooked) {
+    //     return res.status(400).json({ message: `Seat ${seat.seatNo} already booked` });
+    //   }
+    // }
 
     // Mark seats as booked
     await Promise.all(seats.map(seat => seat.update({ isBooked: true })));

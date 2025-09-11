@@ -16,10 +16,10 @@ const Seat = sqlize.define("Seat", {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  price: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  }
+  // price: {
+  //   type: DataTypes.FLOAT,
+  //   allowNull: false,
+  // }
 }, {
   timestamps: true,
   tableName: "seats",

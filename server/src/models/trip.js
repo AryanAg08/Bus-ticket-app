@@ -33,7 +33,7 @@ const Trip = sqlize.define("Trip", {
     // Example: { rows: 10, seatsPerRow: 4 }
   },
   seatPricing: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   saleDuration: {
