@@ -178,11 +178,20 @@ useEffect(() => {
 
   return (
     <div className="seatmap-container">
-    <h2>
-  {trip
-    ? `Trip: ${trip.from} → ${trip.to} | Date: ${new Date(trip.date).toLocaleDateString()} | Time: ${trip.time}`
-    : `Trip ${tripId} - Seat Map`}
-</h2>
+ <div className="trip-info-box">
+  {trip ? (
+    <>
+      <div><strong>From:</strong> {trip.from}</div>
+      <div><strong>To:</strong> {trip.to}</div>
+      <div><strong>Date:</strong> {new Date(trip.departureTime).toLocaleDateString()}</div>
+      <div><strong>Departure:</strong> {new Date(trip.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+      <div><strong>Arrival:</strong> {new Date(trip.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+    </>
+  ) : (
+    <div>Loading trip details...</div>
+  )}
+</div>
+
 
 
       <div className="legend">

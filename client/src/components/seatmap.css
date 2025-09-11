@@ -4,6 +4,20 @@
   font-family: Arial, sans-serif;
 }
 
+.trip-info-box {
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  font-size: 14px;
+}
+.trip-info-box div {
+  margin: 4px 0;
+}
+
+
 .legend {
   display: flex;
   justify-content: center;
