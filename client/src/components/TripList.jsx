@@ -22,8 +22,14 @@ export default function TripList() {
   }, []);
 
   if (loading) {
-    return <div className="status-message">Loading trips...</div>;
-  }
+  return (
+    <div className="status-message">
+      <div className="spinner"></div>
+      <p>Loading trips...</p>
+    </div>
+  );
+}
+
 
   if (!trips.length) {
     return <div className="status-message">No trips available</div>;
