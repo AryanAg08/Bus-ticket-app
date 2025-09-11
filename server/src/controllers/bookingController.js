@@ -6,9 +6,8 @@ const sendEmail = require("../utils/sendEmail");
 exports.confirmBooking = async (req, res) => {
   try {
     const { tripId, seatNos } = req.body;
-    const user = req.user; // logged in user
+    const user = req.user;
 
-    // Fetch trip & seats
     const trip = await Trip.findByPk(tripId);
     const seats = await Seat.findAll({ where: { tripId, seatNo: seatNos } });
 
@@ -16,33 +15,22 @@ exports.confirmBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid trip or seats" });
     }
 
-    // Ensure all seats are available
-    // for (const seat of seats) {
-    //   if (seat.isBooked) {
-    //     return res.status(400).json({ message: `Seat ${seat.seatNo} already booked` });
-    //   }
-    // }
-
-    // Mark seats as booked
     await Promise.all(seats.map(seat => seat.update({ isBooked: true })));
 
-    // Build booking object (for invoice)
     const booking = {
-      id: Date.now(), // can use a real booking model if needed
+      id: Date.now(), 
       trip,
       seats,
       totalPrice: seats.reduce((sum, seat) => sum + seat.price, 0),
     };
 
-    // Generate invoice PDF
     const filePath = await generateInvoice(booking, user);
 
-    // Send confirmation email with invoice
     await sendEmail({
       to: user.email,
       subject: "Booking Confirmation - Bus Ticket",
       text: "Your booking is confirmed. Please find the invoice attached.",
-      html: `<p>Dear ${user.name},</p>
+      html: `<p>Dear ${user.email},</p>
              <p>Your booking from <b>${trip.from}</b> to <b>${trip.to}</b> is confirmed.</p>
              <p>Seats: ${seatNos.join(", ")}</p>
              <p>Total: ₹${booking.totalPrice}</p>`,

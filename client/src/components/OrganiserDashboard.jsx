@@ -35,7 +35,7 @@ export default function OrganiserDashboard() {
         rows: Number(form.rows),
         seatsPerRow: Number(form.seatsPerRow),
       },
-      seatPricing:  Number(form.price),//{ default: Number(form.price) },
+      seatPricing:  Number(form.price),
       saleDuration: {
         start: form.saleStart,
         end: form.saleEnd,

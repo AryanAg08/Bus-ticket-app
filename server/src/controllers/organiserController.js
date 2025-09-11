@@ -8,7 +8,7 @@ exports.signup = async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
-    // check existing
+
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) return res.status(400).json({ message: "Organiser already exists" });
     if (role != "organiser") return res.status(400).json({ message: "Organiser Role signup only!!"});

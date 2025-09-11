@@ -18,7 +18,6 @@ export default function App() {
   const [userRole, setUserRole] = useState(localStorage.getItem("role") || null);
 
   useEffect(() => {
-    // Example: notify global events
     socket.on("connect", () => {
       console.log("socket connected");
     });

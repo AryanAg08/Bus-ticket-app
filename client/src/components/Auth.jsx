@@ -50,6 +50,7 @@ export default function Auth({ mode = "login" }) {
     return (
         <form className="card auth-card" onSubmit={submit}>
             <h2>{mode === "signup" ? "Signup" : "Login"}</h2>
+            
             <label>Email</label>
             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
             <label>Password</label>

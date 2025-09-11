@@ -21,7 +21,7 @@ const generateInvoice = async (booking, user) => {
       doc.moveDown();
 
       // User Info
-      doc.fontSize(12).text(`Name: ${user.name}`);
+      // doc.fontSize(12).text(`Name: ${user.name}`);
       doc.text(`Email: ${user.email}`);
       doc.moveDown();
 

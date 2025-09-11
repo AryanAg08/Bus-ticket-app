@@ -7,7 +7,6 @@ export default function TripList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // fetch trips
     api.getTrips().then((data) => {
       setTrips(data || []);
       setLoading(false);
