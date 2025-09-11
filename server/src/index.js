@@ -11,8 +11,7 @@ const { fileURLToPath } = require("url")
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 // Middleware
 app.use(express.json());
@@ -53,7 +52,7 @@ io.on("connection", (socket) => {
 testDbConnection();
 sqlize.sync({ alter: true }).then(() => console.log("✅ Models synced"));
 
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "../../public")));
 
 // Routes
 const organiserRoutes = require("./routes/organiser.routes");
@@ -70,7 +69,7 @@ app.get("/ping", (req, res) => {
 });
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public", "index.html"));
+  res.sendFile(path.join(__dirname, "../../public", "index.html"));
 });
 
 // Error handlers
