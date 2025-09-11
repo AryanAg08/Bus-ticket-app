@@ -20,9 +20,6 @@ const sqlize = new Sequelize(
   }
 );
 
-export default sequelize;
-
-
 
 const testDbConnection = async () => {
   try {
