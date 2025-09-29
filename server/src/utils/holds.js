@@ -13,7 +13,6 @@ async function placeHold(tripId, seatNo, userId, ttl = 300) {
   try {
     ok = await redis.set(key, JSON.stringify(holdData), { NX: true, EX: ttl });
   } catch (err) {
-    // fallback for clients that expect separate args (ioredis, older clients)
     try {
       ok = await redis.set(key, JSON.stringify(holdData), "NX", "EX", ttl);
     } catch (e) {
@@ -26,7 +25,7 @@ async function placeHold(tripId, seatNo, userId, ttl = 300) {
     try {
       await redis.sadd(`userholds:${userId}`, key);
     } catch (e) {
-      // ignore set-add errors
+      // ignore error!!
     }
     console.log(`placeHold: held ${key} for user ${userId} until ${new Date(expiresAt).toISOString()}`);
     return holdData;

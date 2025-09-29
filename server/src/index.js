@@ -12,11 +12,9 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-
-// Middleware
 app.use(express.json());
 
-// Allow CORS for frontend (update origin in production!)
+// Allow CORS for frontend
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "*", // e.g. "http://localhost:5173"
@@ -68,6 +66,7 @@ app.get("/ping", (req, res) => {
   res.status(200).json("Server running!!");
 });
 
+// for frontend build!!
 const publicPath = path.join(__dirname, '..', 'public');
 app.use(express.static(publicPath));
 
@@ -86,7 +85,7 @@ app.use((err, req, res, next) => {
 });
 
 // Redis key expiry handling
-const redisExpiredChannel = "__keyevent@0__:expired"; // DB 0; change if needed
+const redisExpiredChannel = "__keyevent@0__:expired";
 sub.subscribe(redisExpiredChannel, (err) => {
   if (err) {
     console.error("❌ Failed to subscribe to Redis expired channel:", err);

@@ -1,4 +1,3 @@
-// src/controllers/seatController.js
 const Seat = require("../models/seat");
 const { placeHold, getHold, releaseHold, isSeatHeld, holdKey } = require("../utils/holds");
 const { redis } = require("../config/redis");
@@ -26,16 +25,13 @@ exports.holdSeats = async (req, res) => {
         continue;
       }
 
-      // placeHold now returns holdData object on success, null otherwise
-      const holdData = await placeHold(tripId, seatNo, userId, ttl);
+       const holdData = await placeHold(tripId, seatNo, userId, ttl);
 
       if (holdData) {
-        // make sure Redis has the consistent structure (some clients may have used another call)
-        // (placeHold already set it, so this is mostly a safety write)
         await redis.set(key = `hold:${tripId}:${seatNo}`, JSON.stringify(holdData), "EX", ttl).catch(()=>{});
 
         results.push({ seatNo, ok: true, hold: holdData });
-        // emit the full hold object for clients (includes expiresAt)
+        // emit the full hold object for clients
         io.emit("seatHeld", { tripId, seatNo, hold: holdData });
       } else {
         const existing = await getHold(tripId, seatNo);
@@ -74,7 +70,7 @@ exports.releaseSeats = async (req, res) => {
       }
       const parsed = JSON.parse(hold);
       const isHolder = parsed.userId === userId;
-      const isAdmin = req.user.role === "admin";
+      const isAdmin = req.user.role === "admin"; // for admin if they want to release seat!!!
       if (!isHolder && !isAdmin && !force) {
         results.push({ seatNo, ok: false, reason: "NotHolder" });
         continue;
